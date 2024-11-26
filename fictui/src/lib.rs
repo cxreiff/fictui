@@ -4,6 +4,8 @@ use bevy::{app::ScheduleRunnerPlugin, prelude::*};
 use bevy_ratatui::RatatuiPlugins;
 
 mod interface;
+mod prompt;
+mod readout;
 
 pub fn app_plugin(app: &mut App) {
     app.add_plugins((
@@ -12,5 +14,9 @@ pub fn app_plugin(app: &mut App) {
         ))),
         RatatuiPlugins::default(),
     ))
-    .add_plugins((interface::interface_plugin,));
+    .add_plugins((
+        interface::interface_plugin,
+        prompt::prompt_plugin,
+        readout::readout_plugin,
+    ));
 }
