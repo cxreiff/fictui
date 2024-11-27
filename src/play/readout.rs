@@ -29,17 +29,16 @@ fn handle_prompt_submissions_system(
 
 impl Widget for &Readout {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .padding(Padding::horizontal(1));
+
         let messages = self
             .messages
             .iter()
             .map(|msg| Text::from(msg.clone()))
-            .collect::<widgets::List>();
-        let messages = messages.block(
-            Block::default()
-                .borders(Borders::ALL)
-                .padding(Padding::uniform(1))
-                .title("MESSAGES"),
-        );
+            .collect::<widgets::List>()
+            .block(block);
 
         messages.render(area, buf);
     }
