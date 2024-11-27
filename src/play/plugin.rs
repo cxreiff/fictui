@@ -3,9 +3,7 @@ use std::time::Duration;
 use bevy::{app::ScheduleRunnerPlugin, prelude::*};
 use bevy_ratatui::RatatuiPlugins;
 
-mod interface;
-mod prompt;
-mod readout;
+use super::{interface, prompt, readout};
 
 pub fn app_plugin(app: &mut App) {
     app.add_plugins((

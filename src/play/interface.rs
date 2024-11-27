@@ -5,7 +5,7 @@ use bevy::utils::error;
 use bevy_ratatui::terminal::RatatuiContext;
 use ratatui::layout::{Constraint, Layout};
 
-use crate::{prompt::Prompt, readout::Readout};
+use super::{prompt::Prompt, readout::Readout};
 
 pub fn interface_plugin(app: &mut App) {
     app.add_systems(Update, draw_scene_system.map(error))

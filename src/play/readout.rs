@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{self, Block, Borders, Padding, Widget},
 };
 
-use crate::prompt::PromptSubmitted;
+use super::prompt::PromptSubmitted;
 
 #[derive(Resource, Default)]
 pub struct Readout {
