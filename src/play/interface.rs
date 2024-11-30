@@ -10,6 +10,8 @@ use ratatui::widgets::{self, Block, Borders, Padding, Paragraph};
 use ratatui::Frame;
 use tui_input::Input;
 
+use crate::core::command::SaveData;
+
 pub fn interface_plugin(app: &mut App) {
     app.add_systems(Update, draw_scene_system.map(error))
         .init_resource::<InterfaceState>();
@@ -27,7 +29,9 @@ fn draw_scene_system(
 pub struct InterfaceState {
     pub _focus: InterfaceFocus,
     pub prompt_input: Input,
+    pub commands: Vec<String>,
     pub messages: Vec<String>,
+    pub save_data: SaveData,
 }
 
 #[derive(Default)]
@@ -50,14 +54,15 @@ impl InterfaceState {
             .borders(Borders::ALL)
             .padding(Padding::horizontal(1));
 
-        let messages = self
-            .messages
+        let list = self
+            .commands
             .iter()
-            .map(|msg| Text::from(msg.clone()))
+            .zip(self.messages.iter())
+            .map(|(cmd, msg)| Text::from(vec![Line::from(cmd.clone()), Line::from(msg.clone())]))
             .collect::<widgets::List>()
             .block(block);
 
-        frame.render_widget(messages, area);
+        frame.render_widget(list, area);
     }
 
     fn draw_prompt(&self, frame: &mut Frame, area: Rect) {

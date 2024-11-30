@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 use bevy_ratatui::event::KeyEvent;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
-use tui_input::{backend::crossterm::EventHandler, Input};
+use tui_input::backend::crossterm::EventHandler;
+
+use crate::core::command::handle_command;
 
 use super::interface::InterfaceState;
 
@@ -43,9 +45,12 @@ fn handle_keyboard_system(
 
 fn handle_prompt_submissions_system(
     mut prompt_submitted: EventReader<PromptSubmitted>,
-    mut readout: ResMut<InterfaceState>,
+    mut interface_state: ResMut<InterfaceState>,
 ) {
     for submission in prompt_submitted.read() {
-        readout.messages.push(submission.0.clone());
+        let response = handle_command(submission, &interface_state.save_data);
+        interface_state.commands.push(response.command);
+        interface_state.messages.push(response.message);
+        interface_state.save_data = response.new_save_data;
     }
 }
