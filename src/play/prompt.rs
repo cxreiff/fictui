@@ -51,11 +51,19 @@ fn handle_keyboard_system(
 fn handle_prompt_submissions_system(
     mut prompt_submitted: EventReader<PromptSubmitted>,
     mut interface_state: ResMut<InterfaceState>,
+    mut app_exit: EventWriter<AppExit>,
 ) {
     for PromptSubmitted(submission) in prompt_submitted.read() {
         interface_state.commands.push(submission.into());
 
-        let response = Command::parse(submission).handle(&interface_state.save_data);
+        let command = Command::parse(submission);
+
+        if let Command::Quit = command {
+            app_exit.send_default();
+            return;
+        }
+
+        let response = command.handle(&interface_state.save_data);
 
         interface_state.messages.push(response.message);
         interface_state.save_data = response.new_save_data;

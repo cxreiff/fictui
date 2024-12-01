@@ -10,6 +10,13 @@ impl Command {
         }
     }
 
+    pub fn handle_command_quit(self, save_data: &SaveData) -> Response {
+        Response {
+            message: "Quitting...".into(),
+            new_save_data: save_data.clone(),
+        }
+    }
+
     pub fn handle_command_look(self, save_data: &SaveData) -> Response {
         Response {
             message: "You see your surroundings.".into(),
