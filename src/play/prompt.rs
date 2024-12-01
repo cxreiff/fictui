@@ -3,7 +3,7 @@ use bevy_ratatui::event::KeyEvent;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
 use tui_input::backend::crossterm::EventHandler;
 
-use crate::core::command::handle_command;
+use crate::core::commands::command::Command;
 
 use super::interface::InterfaceState;
 
@@ -25,8 +25,13 @@ fn handle_keyboard_system(
         match key_event.kind {
             KeyEventKind::Press | KeyEventKind::Repeat => match key_event.code {
                 KeyCode::Enter => {
-                    prompt_submitted
-                        .send(PromptSubmitted(interface_state.prompt_input.value().into()));
+                    let submitted = interface_state.prompt_input.value();
+
+                    if submitted.is_empty() {
+                        return;
+                    }
+
+                    prompt_submitted.send(PromptSubmitted(submitted.into()));
                     interface_state.prompt_input.reset();
                 }
                 KeyCode::Esc => {
@@ -47,9 +52,11 @@ fn handle_prompt_submissions_system(
     mut prompt_submitted: EventReader<PromptSubmitted>,
     mut interface_state: ResMut<InterfaceState>,
 ) {
-    for submission in prompt_submitted.read() {
-        let response = handle_command(submission, &interface_state.save_data);
-        interface_state.commands.push(response.command);
+    for PromptSubmitted(submission) in prompt_submitted.read() {
+        interface_state.commands.push(submission.into());
+
+        let response = Command::parse(submission).handle(&interface_state.save_data);
+
         interface_state.messages.push(response.message);
         interface_state.save_data = response.new_save_data;
     }

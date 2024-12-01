@@ -5,12 +5,13 @@ use bevy::utils::error;
 use bevy_ratatui::terminal::RatatuiContext;
 use ratatui::layout::{Constraint, Layout};
 use ratatui::layout::{Position, Rect};
+use ratatui::style::{Color, Stylize};
 use ratatui::text::{Line, Text};
 use ratatui::widgets::{self, Block, Borders, Padding, Paragraph};
 use ratatui::Frame;
 use tui_input::Input;
 
-use crate::core::command::SaveData;
+use crate::core::saves::SaveData;
 
 pub fn interface_plugin(app: &mut App) {
     app.add_systems(Update, draw_scene_system.map(error))
@@ -58,7 +59,13 @@ impl InterfaceState {
             .commands
             .iter()
             .zip(self.messages.iter())
-            .map(|(cmd, msg)| Text::from(vec![Line::from(cmd.clone()), Line::from(msg.clone())]))
+            .map(|(cmd, msg)| {
+                Text::from(vec![
+                    Line::from(format!("> {cmd}")).fg(Color::DarkGray),
+                    Line::from(msg.clone()),
+                    "".into(),
+                ])
+            })
             .collect::<widgets::List>()
             .block(block);
 
