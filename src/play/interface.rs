@@ -3,13 +3,14 @@ use std::io;
 use bevy::prelude::*;
 use bevy::utils::error;
 use bevy_ratatui::terminal::RatatuiContext;
-use ratatui::layout::{Constraint, Layout};
+use ratatui::layout::{Constraint, Layout, Size};
 use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Stylize};
-use ratatui::text::{Line, Text};
-use ratatui::widgets::{self, Block, Borders, Padding, Paragraph};
+use ratatui::text::Line;
+use ratatui::widgets::{Block, Borders, Padding, Paragraph, Wrap};
 use ratatui::Frame;
 use tui_input::Input;
+use tui_scrollview::{ScrollView, ScrollViewState, ScrollbarVisibility};
 
 use crate::core::saves::SaveData;
 
@@ -20,7 +21,7 @@ pub fn interface_plugin(app: &mut App) {
 
 fn draw_scene_system(
     mut ratatui: ResMut<RatatuiContext>,
-    interface_state: Res<InterfaceState>,
+    mut interface_state: ResMut<InterfaceState>,
 ) -> io::Result<()> {
     ratatui.draw(|frame| interface_state.draw(frame, frame.area()))?;
     Ok(())
@@ -30,6 +31,9 @@ fn draw_scene_system(
 pub struct InterfaceState {
     pub _focus: InterfaceFocus,
     pub prompt_input: Input,
+    pub readout_scroll: ScrollViewState,
+    previous_content_size: Size,
+    previous_scroll_view_size: Size,
     pub commands: Vec<String>,
     pub messages: Vec<String>,
     pub save_data: SaveData,
@@ -42,34 +46,91 @@ pub enum InterfaceFocus {
 }
 
 impl InterfaceState {
-    fn draw(&self, frame: &mut Frame, area: Rect) {
-        let constraints = [Constraint::Min(1), Constraint::Length(3)];
+    fn draw(&mut self, frame: &mut Frame, area: Rect) {
+        let constraints = [Constraint::Min(3), Constraint::Length(3)];
         let layout = Layout::vertical(constraints).split(area);
 
         self.draw_readout(frame, layout[0]);
         self.draw_prompt(frame, layout[1]);
     }
 
-    fn draw_readout(&self, frame: &mut Frame, area: Rect) {
+    fn draw_readout(&mut self, frame: &mut Frame, area: Rect) {
+        // Create the containing block.
         let block = Block::default()
             .borders(Borders::ALL)
             .padding(Padding::horizontal(1));
+        let inner_area = block.inner(area);
 
-        let list = self
-            .commands
-            .iter()
-            .zip(self.messages.iter())
-            .map(|(cmd, msg)| {
-                Text::from(vec![
-                    Line::from(format!("> {cmd}")).fg(Color::DarkGray),
-                    Line::from(msg.clone()),
-                    "".into(),
-                ])
-            })
-            .collect::<widgets::List>()
-            .block(block);
+        // Interleave commands and messages into a paragraph.
+        let paragraph = Paragraph::new(
+            self.commands
+                .iter()
+                .zip(self.messages.iter())
+                .flat_map(|(cmd, msg)| {
+                    vec![
+                        Line::from(format!(">\u{00a0}{cmd}")).fg(Color::DarkGray),
+                        Line::from(msg.clone()),
+                        "".into(),
+                    ]
+                })
+                .collect::<Vec<Line>>(),
+        )
+        .wrap(Wrap::default());
 
-        frame.render_widget(list, area);
+        // Determine the size of the scroll content and create the scroll view.
+        let paragraph_size = Size::new(
+            inner_area.width,
+            paragraph.line_count(inner_area.width) as u16,
+        );
+        let mut scroll_view = ScrollView::new(paragraph_size);
+
+        // We will add or subtract from this value if resizes would change how far we are scrolled
+        // from the bottom of the scroll content, and then we will use it to correct the scroll
+        // offset to be preserved relative to the bottom instead of top. We do this because the
+        // default is to be scrolled to the bottom where new content appears.
+        let mut resize_scroll_shift = 0;
+
+        // Handle the case where the height of the scrollable content changes.
+        if paragraph_size.height != self.previous_content_size.height {
+            resize_scroll_shift +=
+                paragraph_size.height as i16 - self.previous_content_size.height as i16;
+        }
+
+        // Handle the case where the height of the scroll view changes.
+        if inner_area.height != self.previous_scroll_view_size.height {
+            resize_scroll_shift +=
+                self.previous_scroll_view_size.height as i16 - inner_area.height as i16;
+        }
+
+        // Use the calculated shift to correct the offset to be constant relative to the bottom of
+        // the scrolled content.
+        let mut new_offset = self.readout_scroll.offset();
+        new_offset.y = new_offset.y.saturating_add_signed(resize_scroll_shift);
+        self.readout_scroll.set_offset(new_offset);
+
+        // Update the previous sizes so that we can make the same scroll correction next frame.
+        self.previous_content_size = paragraph_size;
+        self.previous_scroll_view_size = Size::from(inner_area);
+
+        // When scroll view is scrolled to bottom of content (the "default" state) hide the
+        // scrollbars, even if there is scrollable content.
+        if self.readout_scroll.offset().y
+            > (paragraph_size.height).saturating_sub(inner_area.height)
+        {
+            scroll_view = scroll_view.scrollbars_visibility(ScrollbarVisibility::Never);
+        }
+
+        // Increase the render area for the scroll view by two so that the scrollbar overlaps with
+        // the containing block's right border.
+        let wider_inner_area = Rect {
+            width: inner_area.width + 2,
+            ..inner_area
+        };
+
+        // Render the block, scroll content, and scroll view.
+        frame.render_widget(block, area);
+        scroll_view.render_widget(paragraph, scroll_view.area());
+        frame.render_stateful_widget(scroll_view, wider_inner_area, &mut self.readout_scroll);
     }
 
     fn draw_prompt(&self, frame: &mut Frame, area: Rect) {

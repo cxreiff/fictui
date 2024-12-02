@@ -25,6 +25,7 @@ fn handle_keyboard_system(
         match key_event.kind {
             KeyEventKind::Press | KeyEventKind::Repeat => match key_event.code {
                 KeyCode::Enter => {
+                    interface_state.readout_scroll.scroll_to_bottom();
                     let submitted = interface_state.prompt_input.value();
 
                     if submitted.is_empty() {
@@ -36,6 +37,18 @@ fn handle_keyboard_system(
                 }
                 KeyCode::Esc => {
                     interface_state.prompt_input.reset();
+                }
+                KeyCode::Up => {
+                    interface_state.readout_scroll.scroll_up();
+                }
+                KeyCode::Down => {
+                    interface_state.readout_scroll.scroll_down();
+                }
+                KeyCode::PageUp => {
+                    interface_state.readout_scroll.scroll_page_up();
+                }
+                KeyCode::PageDown => {
+                    interface_state.readout_scroll.scroll_page_down();
                 }
                 _ => {
                     interface_state
@@ -67,5 +80,7 @@ fn handle_prompt_submissions_system(
 
         interface_state.messages.push(response.message);
         interface_state.save_data = response.new_save_data;
+
+        interface_state.readout_scroll.scroll_to_bottom();
     }
 }
