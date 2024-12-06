@@ -3,9 +3,9 @@ use bevy_ratatui::event::KeyEvent;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
 use tui_input::backend::crossterm::EventHandler;
 
-use crate::core::commands::command::Command;
+use crate::core::command::Command;
 
-use super::interface::InterfaceState;
+use super::{grid::GridResource, interface::InterfaceState};
 
 #[derive(Event, Deref, DerefMut)]
 pub struct PromptSubmitted(pub String);
@@ -63,8 +63,9 @@ fn handle_keyboard_system(
 
 fn handle_prompt_submissions_system(
     mut prompt_submitted: EventReader<PromptSubmitted>,
-    mut interface_state: ResMut<InterfaceState>,
     mut app_exit: EventWriter<AppExit>,
+    mut interface_state: ResMut<InterfaceState>,
+    grid: Res<GridResource>,
 ) {
     for PromptSubmitted(submission) in prompt_submitted.read() {
         interface_state.commands.push(submission.into());
@@ -76,7 +77,7 @@ fn handle_prompt_submissions_system(
             return;
         }
 
-        let response = command.handle(&interface_state.save_data);
+        let response = grid.handle(&command, &interface_state.save_data);
 
         interface_state.messages.push(response.message);
         interface_state.save_data = response.new_save_data;

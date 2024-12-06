@@ -12,7 +12,7 @@ use ratatui::Frame;
 use tui_input::Input;
 use tui_scrollview::{ScrollView, ScrollViewState, ScrollbarVisibility};
 
-use crate::core::saves::SaveData;
+use crate::core::save_data::SaveData;
 
 pub fn interface_plugin(app: &mut App) {
     app.add_systems(Update, draw_scene_system.map(error))
@@ -68,7 +68,7 @@ impl InterfaceState {
                 .zip(self.messages.iter())
                 .flat_map(|(cmd, msg)| {
                     vec![
-                        Line::from(format!(">\u{00a0}{cmd}")).fg(Color::DarkGray),
+                        Line::from(format!(">\u{00a0}{cmd}")).fg(Color::Rgb(220, 220, 220)),
                         Line::from(msg.clone()),
                         "".into(),
                     ]
