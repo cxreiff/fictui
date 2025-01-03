@@ -1,3 +1,9 @@
+use nom::{
+    character::complete::{alpha1, space0},
+    sequence::terminated,
+    IResult,
+};
+
 pub enum Command {
     Unknown,
     Quit,
@@ -12,22 +18,32 @@ pub struct CommandRenameProps {
 
 impl Command {
     pub fn parse(command_string: &str) -> Self {
-        match command_string.chars().next() {
-            Some('q') => Command::Quit,
-            Some('l') => Command::Look,
-            Some('g') => Command::Go,
-            Some('r') => Self::parse_command_rename(command_string),
-            _ => Command::Unknown,
-        }
-    }
-
-    fn parse_command_rename(command_string: &str) -> Self {
-        let Some(new_name) = command_string.split(' ').nth(1) else {
+        let Ok((_, command)) = Self::parse_command(command_string) else {
             return Command::Unknown;
         };
 
+        command
+    }
+
+    fn parse_command(input: &str) -> IResult<&str, Self> {
+        let (input, first_word) = terminated(alpha1, space0)(input)?;
+
+        let (input, command) = match first_word {
+            "q" | "quit" => (input, Self::Quit),
+            "l" | "look" => (input, Self::Look),
+            "g" | "go" => (input, Self::Go),
+            "r" | "rename" => Self::parse_command_rename(input)?,
+            _ => (input, Self::Unknown),
+        };
+
+        Ok((input, command))
+    }
+
+    fn parse_command_rename(input: &str) -> IResult<&str, Self> {
+        let (input, new_name) = terminated(alpha1, space0)(input)?;
+
         let new_name = new_name.to_string();
 
-        Command::Rename(CommandRenameProps { new_name })
+        Ok((input, Command::Rename(CommandRenameProps { new_name })))
     }
 }

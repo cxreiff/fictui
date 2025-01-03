@@ -23,7 +23,7 @@ pub struct Item {
 
 impl GridData {
     pub fn load() -> Self {
-        // TODO: retrieve from disk
+        // TODO: retrieve from disk and deserialize with `serde`
 
         let tiles = vec![Tile {
             id: 1,
