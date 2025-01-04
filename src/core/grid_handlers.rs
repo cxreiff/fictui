@@ -1,6 +1,9 @@
 use crate::core::{command::Command, save_data::SaveData};
 
-use super::{command::CommandRenameProps, grid::Grid};
+use super::{
+    command::{CommandGoProps, CommandLookProps, CommandRenameProps},
+    grid::Grid,
+};
 
 pub struct GridResponse {
     pub message: String,
@@ -16,9 +19,9 @@ impl Grid {
         match command {
             Command::Unknown => self.handle_command_unknown(save_data),
             Command::Quit => self.handle_command_quit(save_data),
-            Command::Look => self.handle_command_look(save_data),
-            Command::Go => self.handle_command_go(save_data),
-            Command::Rename(props) => self.handle_command_rename(props, save_data),
+            Command::Look(props) => self.handle_command_look(save_data, props),
+            Command::Go(props) => self.handle_command_go(save_data, props),
+            Command::Rename(props) => self.handle_command_rename(save_data, props),
         }
     }
 
@@ -36,7 +39,7 @@ impl Grid {
         }
     }
 
-    fn handle_command_look(&self, save_data: &SaveData) -> GridResponse {
+    fn handle_command_look(&self, save_data: &SaveData, _props: &CommandLookProps) -> GridResponse {
         let Some(current_tile_index) = self.maps.tiles.get(&save_data.tile) else {
             return GridResponse {
                 message: GridResponse::INVALID_SAVE_DATA.to_string(),
@@ -54,17 +57,17 @@ impl Grid {
         }
     }
 
-    fn handle_command_go(&self, save_data: &SaveData) -> GridResponse {
+    fn handle_command_go(&self, save_data: &SaveData, props: &CommandGoProps) -> GridResponse {
         GridResponse {
-            message: "You proceed.".into(),
+            message: format!("You proceed {}.", props.direction),
             new_save_data: save_data.clone(),
         }
     }
 
     fn handle_command_rename(
         &self,
-        props: &CommandRenameProps,
         save_data: &SaveData,
+        props: &CommandRenameProps,
     ) -> GridResponse {
         GridResponse {
             message: format!("Your new name is {}", props.new_name),
