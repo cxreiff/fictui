@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use super::{grid_data::GridData, grid_maps::GridMaps};
 
 pub struct Grid {
@@ -10,10 +8,8 @@ pub struct Grid {
 impl Grid {
     pub fn init() -> Self {
         let data = GridData::load();
+        let maps = GridMaps::from(&data);
 
-        Self {
-            maps: data.borrow().into(),
-            data,
-        }
+        Self { maps, data }
     }
 }

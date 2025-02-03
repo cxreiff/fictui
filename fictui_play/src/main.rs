@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use clap::{Parser, Subcommand};
 
-use fictui::play;
+use fictui_play::play;
 
 #[derive(Parser)]
 struct Args {

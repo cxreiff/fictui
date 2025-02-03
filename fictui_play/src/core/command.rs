@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use nom::{
     character::complete::{alpha1, space0},
     error::ErrorKind,
@@ -7,6 +5,8 @@ use nom::{
     Err::Error,
     IResult,
 };
+
+use super::types::Direction;
 
 pub enum Command {
     Unknown,
@@ -17,11 +17,11 @@ pub enum Command {
 }
 
 pub struct CommandLookProps {
-    pub _direction: Option<CommandDirection>,
+    pub _direction: Option<Direction>,
 }
 
 pub struct CommandGoProps {
-    pub direction: CommandDirection,
+    pub direction: Direction,
 }
 
 pub struct CommandRenameProps {
@@ -71,16 +71,16 @@ impl Command {
         Ok((input, Command::Rename(CommandRenameProps { new_name })))
     }
 
-    fn parse_direction(input: &str) -> IResult<&str, CommandDirection> {
+    fn parse_direction(input: &str) -> IResult<&str, Direction> {
         let (input, next_word) = Self::parse_next_word(input)?;
 
         let direction = match next_word {
-            "n" | "north" => CommandDirection::North,
-            "e" | "east" => CommandDirection::East,
-            "s" | "south" => CommandDirection::South,
-            "w" | "west" => CommandDirection::West,
-            "u" | "up" => CommandDirection::Up,
-            "d" | "down" => CommandDirection::Down,
+            "n" | "north" => Direction::North,
+            "e" | "east" => Direction::East,
+            "s" | "south" => Direction::South,
+            "w" | "west" => Direction::West,
+            "u" | "up" => Direction::Up,
+            "d" | "down" => Direction::Down,
             _ => {
                 return Err(Error(nom::error::Error {
                     input,
@@ -94,31 +94,5 @@ impl Command {
 
     fn parse_next_word(input: &str) -> IResult<&str, &str> {
         terminated(alpha1, space0)(input)
-    }
-}
-
-pub enum CommandDirection {
-    North,
-    East,
-    South,
-    West,
-    Up,
-    Down,
-}
-
-impl Display for CommandDirection {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match *self {
-                Self::North => "north",
-                Self::East => "east",
-                Self::South => "south",
-                Self::West => "west",
-                Self::Up => "up",
-                Self::Down => "down",
-            }
-        )
     }
 }
