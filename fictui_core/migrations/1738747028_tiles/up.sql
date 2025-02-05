@@ -1,0 +1,6 @@
+CREATE TABLE tiles (
+  id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  name      VARCHAR NOT NULL,
+  summary   VARCHAR NOT NULL,
+  body TEXT NOT NULL
+)
