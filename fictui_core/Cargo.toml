@@ -6,4 +6,5 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5.27", features = ["derive"] }
 diesel = { version = "2.2.7", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
+diesel-derive-enum = { version = "2.1.0", features = ["sqlite"] }
 diesel_migrations = "2.2.0"

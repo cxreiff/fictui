@@ -2,7 +2,11 @@ use std::{error::Error, path::PathBuf};
 
 use clap::{Parser, Subcommand};
 use fictui_core::database::{
-    models::{tile_instances::NewTileInstance, tiles::NewTile},
+    models::{
+        gates::{GateDirection, NewGate},
+        tile_instances::NewTileInstance,
+        tiles::NewTile,
+    },
     Database,
 };
 
@@ -21,6 +25,8 @@ enum Commands {
     ListTiles,
     InsertTileInstance,
     ListTileInstances,
+    InsertGate,
+    ListGates,
 }
 
 fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
@@ -47,6 +53,25 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
                 .iter()
                 .for_each(|tile_instance| println!("{tile_instance:?}"));
         }
+        Commands::InsertGate => {
+            db.insert_gate(NewGate {
+                name: "test gate 1",
+                summary: "test summary 1",
+                body: "test body 1",
+                source_tile_id: &1,
+                destination_tile_id: &2,
+                direction: &GateDirection::North,
+            });
+            db.insert_gate(NewGate {
+                name: "test gate 2",
+                summary: "test summary 2",
+                body: "test body 2",
+                source_tile_id: &2,
+                destination_tile_id: &1,
+                direction: &GateDirection::South,
+            });
+        }
+        Commands::ListGates => db.list_gates().iter().for_each(|gate| println!("{gate:?}")),
     };
 
     Ok(())
