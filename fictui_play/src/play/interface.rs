@@ -3,6 +3,7 @@ use std::io;
 use bevy::prelude::*;
 use bevy::utils::error;
 use bevy_ratatui::terminal::RatatuiContext;
+use fictui_core::grid::save_data::SaveData;
 use ratatui::layout::{Constraint, Layout, Size};
 use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Stylize};
@@ -11,8 +12,6 @@ use ratatui::widgets::{Block, Borders, Padding, Paragraph, Wrap};
 use ratatui::Frame;
 use tui_input::Input;
 use tui_scrollview::{ScrollView, ScrollViewState, ScrollbarVisibility};
-
-use crate::core::save_data::SaveData;
 
 pub fn interface_plugin(app: &mut App) {
     app.add_systems(Update, draw_scene_system.map(error))

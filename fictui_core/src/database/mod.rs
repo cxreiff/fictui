@@ -1,7 +1,9 @@
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
 use diesel::{Connection, SqliteConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+
+use crate::types::BoxedError;
 
 pub mod models;
 
@@ -12,7 +14,7 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn establish(file: PathBuf) -> Result<Self, Box<dyn Error + Send + Sync + 'static>> {
+    pub fn establish(file: PathBuf) -> Result<Self, BoxedError> {
         let file = file.to_str().unwrap();
         let mut connection = SqliteConnection::establish(file)?;
 

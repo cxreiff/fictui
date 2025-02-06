@@ -1,9 +1,8 @@
 use bevy::prelude::*;
 use bevy_ratatui::event::KeyEvent;
+use fictui_core::parser::Command;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
 use tui_input::backend::crossterm::EventHandler;
-
-use crate::core::command::Command;
 
 use super::{grid::GridResource, interface::InterfaceState};
 
@@ -65,7 +64,7 @@ fn handle_prompt_submissions_system(
     mut prompt_submitted: EventReader<PromptSubmitted>,
     mut app_exit: EventWriter<AppExit>,
     mut interface_state: ResMut<InterfaceState>,
-    grid: Res<GridResource>,
+    mut grid: NonSendMut<GridResource>,
 ) {
     for PromptSubmitted(submission) in prompt_submitted.read() {
         interface_state.commands.push(submission.into());
@@ -77,10 +76,10 @@ fn handle_prompt_submissions_system(
             return;
         }
 
-        let response = grid.handle(&command, &interface_state.save_data);
+        let response = grid.handle(command, interface_state.save_data.clone());
 
         interface_state.messages.push(response.message);
-        interface_state.save_data = response.new_save_data;
+        interface_state.save_data = response.save_data;
 
         interface_state.readout_scroll.scroll_to_bottom();
     }

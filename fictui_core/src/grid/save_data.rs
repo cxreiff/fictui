@@ -1,7 +1,7 @@
 #[derive(Clone)]
 pub struct SaveData {
     pub name: String,
-    pub current_tile: u32,
+    pub current_tile: i32,
 }
 
 impl Default for SaveData {

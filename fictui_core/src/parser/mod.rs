@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use nom::{
     character::complete::{alpha1, space0},
     error::ErrorKind,
@@ -19,7 +17,7 @@ pub enum Command {
 }
 
 pub struct CommandLookProps {
-    pub _direction: Option<GateDirection>,
+    pub direction: Option<GateDirection>,
 }
 
 pub struct CommandGoProps {
@@ -31,21 +29,10 @@ pub struct CommandRenameProps {
 }
 
 impl Command {
-    pub fn new(input: &str) -> Self {
-        input.parse().unwrap_or(Self::Unknown)
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct ParseCommandError;
-
-impl FromStr for Command {
-    type Err = ParseCommandError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        parse_command(s)
-            .map_err(|_| ParseCommandError)
+    pub fn parse(input: &str) -> Self {
+        parse_command(input)
             .map(|(_, command)| command)
+            .unwrap_or(Self::Unknown)
     }
 }
 
@@ -64,15 +51,17 @@ fn parse_command(input: &str) -> IResult<&str, Command> {
 }
 
 fn parse_command_look(input: &str) -> IResult<&str, Command> {
-    Ok((input, Command::Look(CommandLookProps { _direction: None })))
+    let direction = parse_direction(input).map(|(_, d)| d).ok();
+
+    Ok(("", Command::Look(CommandLookProps { direction })))
 }
 
 fn parse_command_go(input: &str) -> IResult<&str, Command> {
-    let (input, next_word) = parse_next_word(input)?;
+    let (_, next_word) = parse_next_word(input)?;
 
     let (_, direction) = parse_direction(next_word)?;
 
-    Ok((input, Command::Go(CommandGoProps { direction })))
+    Ok(("", Command::Go(CommandGoProps { direction })))
 }
 
 fn parse_command_rename(input: &str) -> IResult<&str, Command> {
@@ -84,7 +73,7 @@ fn parse_command_rename(input: &str) -> IResult<&str, Command> {
 }
 
 fn parse_direction(input: &str) -> IResult<&str, GateDirection> {
-    let (input, next_word) = parse_next_word(input)?;
+    let (_, next_word) = parse_next_word(input)?;
 
     let direction = match next_word {
         "n" | "north" => GateDirection::North,
@@ -101,7 +90,7 @@ fn parse_direction(input: &str) -> IResult<&str, GateDirection> {
         }
     };
 
-    Ok((input, direction))
+    Ok(("", direction))
 }
 
 fn parse_next_word(input: &str) -> IResult<&str, &str> {

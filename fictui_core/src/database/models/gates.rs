@@ -1,8 +1,8 @@
 use diesel::{
     prelude::{Insertable, Queryable},
-    query_dsl::methods::SelectDsl,
+    query_dsl::methods::{FilterDsl, SelectDsl},
     sqlite::Sqlite,
-    RunQueryDsl, Selectable, SelectableHelper,
+    ExpressionMethods, OptionalExtension, RunQueryDsl, Selectable, SelectableHelper,
 };
 use diesel_derive_enum::DbEnum;
 
@@ -65,6 +65,20 @@ impl Database {
             .returning(Gate::as_returning())
             .get_result(&mut self.connection)
             .expect("error creating new gate")
+    }
+
+    pub fn select_gate_by_source_and_direction(
+        &mut self,
+        source_tile_id: i32,
+        direction: GateDirection,
+    ) -> Option<Gate> {
+        gates::table
+            .filter(gates::source_tile_id.eq(source_tile_id))
+            .filter(gates::direction.eq(direction))
+            .select(Gate::as_select())
+            .get_result(&mut self.connection)
+            .optional()
+            .expect("error retrieving gate")
     }
 
     pub fn list_gates(&mut self) -> Vec<Gate> {

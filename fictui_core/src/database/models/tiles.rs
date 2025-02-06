@@ -1,8 +1,8 @@
 use diesel::{
     prelude::{Insertable, Queryable},
-    query_dsl::methods::SelectDsl,
+    query_dsl::methods::{FindDsl, SelectDsl},
     sqlite::Sqlite,
-    RunQueryDsl, Selectable, SelectableHelper,
+    OptionalExtension, RunQueryDsl, Selectable, SelectableHelper,
 };
 
 use super::super::Database;
@@ -41,6 +41,15 @@ impl Database {
             .returning(Tile::as_returning())
             .get_result(&mut self.connection)
             .expect("error creating new tile")
+    }
+
+    pub fn select_tile(&mut self, id: i32) -> Option<Tile> {
+        tiles::table
+            .find(id)
+            .select(Tile::as_select())
+            .get_result(&mut self.connection)
+            .optional()
+            .expect("error retrieving tile")
     }
 
     pub fn list_tiles(&mut self) -> Vec<Tile> {
