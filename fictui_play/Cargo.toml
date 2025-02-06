@@ -7,6 +7,7 @@ edition = "2021"
 bevy = "0.15.0"
 bevy_ratatui = "0.7.0"
 clap = { version = "4.5.23", features = ["derive"] }
+fictui_core = { path = "../fictui_core", version = "0.1.0" }
 nom = "7.1.3"
 ratatui = { version = "0.29.0", features = ["unstable-rendered-line-info"] }
 tui-input = "0.11.1"

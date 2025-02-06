@@ -14,6 +14,8 @@ pub enum GateDirection {
     East,
     South,
     West,
+    Up,
+    Down,
 }
 
 diesel::table! {
