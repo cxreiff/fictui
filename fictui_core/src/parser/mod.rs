@@ -6,7 +6,7 @@ use nom::{
     IResult, Parser,
 };
 
-use crate::database::models::gates::GateDirection;
+use crate::database::direction::Direction;
 
 pub enum Command {
     Unknown,
@@ -17,11 +17,11 @@ pub enum Command {
 }
 
 pub struct CommandLookProps {
-    pub direction: Option<GateDirection>,
+    pub direction: Option<Direction>,
 }
 
 pub struct CommandGoProps {
-    pub direction: GateDirection,
+    pub direction: Direction,
 }
 
 pub struct CommandRenameProps {
@@ -72,16 +72,16 @@ fn parse_command_rename(input: &str) -> IResult<&str, Command> {
     Ok((input, Command::Rename(CommandRenameProps { new_name })))
 }
 
-fn parse_direction(input: &str) -> IResult<&str, GateDirection> {
+fn parse_direction(input: &str) -> IResult<&str, Direction> {
     let (_, next_word) = parse_next_word(input)?;
 
     let direction = match next_word {
-        "n" | "north" => GateDirection::North,
-        "e" | "east" => GateDirection::East,
-        "s" | "south" => GateDirection::South,
-        "w" | "west" => GateDirection::West,
-        "u" | "up" => GateDirection::Up,
-        "d" | "down" => GateDirection::Down,
+        "n" | "north" => Direction::North,
+        "e" | "east" => Direction::East,
+        "s" | "south" => Direction::South,
+        "w" | "west" => Direction::West,
+        "u" | "up" => Direction::Up,
+        "d" | "down" => Direction::Down,
         _ => {
             return Err(Error(nom::error::Error {
                 input,
