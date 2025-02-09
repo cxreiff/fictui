@@ -3,11 +3,11 @@ use std::io;
 use bevy::prelude::*;
 use bevy::utils::error;
 use bevy_ratatui::terminal::RatatuiContext;
-use fictui_core::grid::save_data::SaveData;
+use fictui_core::save_data::SaveData;
 use ratatui::layout::{Constraint, Layout, Size};
 use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Stylize};
-use ratatui::text::Line;
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Padding, Paragraph, Wrap};
 use ratatui::Frame;
 use tui_input::Input;
@@ -66,11 +66,13 @@ impl InterfaceState {
                 .iter()
                 .zip(self.messages.iter())
                 .flat_map(|(cmd, msg)| {
-                    vec![
-                        Line::from(format!(">\u{00a0}{cmd}")).fg(Color::Rgb(220, 220, 220)),
-                        Line::from(msg.clone()),
-                        "".into(),
-                    ]
+                    let cmd_line = vec![Line::from(vec![
+                        Span::from(">\u{00a0}").fg(Color::Magenta),
+                        Span::from(cmd).fg(Color::Cyan),
+                    ])];
+                    let msg_lines = msg.lines().map(Line::from).collect();
+                    let separator = vec!["".into()];
+                    [cmd_line, separator.clone(), msg_lines, separator].concat()
                 })
                 .collect::<Vec<Line>>(),
         )

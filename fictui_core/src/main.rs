@@ -1,7 +1,7 @@
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use fictui_core::database::Database;
+use fictui_core::{database::Database, types::BoxedError};
 
 #[derive(Parser)]
 struct Args {
@@ -22,7 +22,7 @@ enum Commands {
     ListGates,
 }
 
-fn main() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+fn main() -> Result<(), BoxedError> {
     let Args { command, file } = Args::parse();
 
     let mut _db = Database::establish(file)?;

@@ -1,7 +1,7 @@
 use rusqlite::{Params, Row};
 use rusqlite_migration::M;
 
-use super::TableRow;
+use crate::database::TableRow;
 
 pub struct TileInstance {
     pub id: i32,

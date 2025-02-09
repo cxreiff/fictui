@@ -1,4 +1,4 @@
-mod grid;
+mod handler;
 mod interface;
 mod plugin;
 mod prompt;

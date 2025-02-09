@@ -1,12 +1,14 @@
-use nom::{
-    character::complete::{alpha1, space0},
-    error::ErrorKind,
-    sequence::terminated,
-    Err::Error,
-    IResult, Parser,
+use edit::{parse_command_extend, parse_command_initialize, CommandExtendProps};
+use nom::IResult;
+use play::{
+    parse_command_go, parse_command_look, parse_command_rename, CommandGoProps, CommandLookProps,
+    CommandRenameProps,
 };
+use utils::parse_next_word;
 
-use crate::database::direction::Direction;
+pub mod edit;
+pub mod play;
+pub mod utils;
 
 pub enum Command {
     Unknown,
@@ -14,18 +16,9 @@ pub enum Command {
     Look(CommandLookProps),
     Go(CommandGoProps),
     Rename(CommandRenameProps),
-}
 
-pub struct CommandLookProps {
-    pub direction: Option<Direction>,
-}
-
-pub struct CommandGoProps {
-    pub direction: Direction,
-}
-
-pub struct CommandRenameProps {
-    pub new_name: String,
+    Initialize,
+    Extend(CommandExtendProps),
 }
 
 impl Command {
@@ -44,55 +37,10 @@ fn parse_command(input: &str) -> IResult<&str, Command> {
         "l" | "look" => parse_command_look(input)?,
         "g" | "go" => parse_command_go(input)?,
         "r" | "rename" => parse_command_rename(input)?,
+        "i" | "init" => parse_command_initialize(input)?,
+        "e" | "extend" => parse_command_extend(input)?,
         _ => (input, Command::Unknown),
     };
 
     Ok((input, command))
-}
-
-fn parse_command_look(input: &str) -> IResult<&str, Command> {
-    let direction = parse_direction(input).map(|(_, d)| d).ok();
-
-    Ok(("", Command::Look(CommandLookProps { direction })))
-}
-
-fn parse_command_go(input: &str) -> IResult<&str, Command> {
-    let (_, next_word) = parse_next_word(input)?;
-
-    let (_, direction) = parse_direction(next_word)?;
-
-    Ok(("", Command::Go(CommandGoProps { direction })))
-}
-
-fn parse_command_rename(input: &str) -> IResult<&str, Command> {
-    let (input, new_name) = parse_next_word(input)?;
-
-    let new_name = new_name.to_string();
-
-    Ok((input, Command::Rename(CommandRenameProps { new_name })))
-}
-
-fn parse_direction(input: &str) -> IResult<&str, Direction> {
-    let (_, next_word) = parse_next_word(input)?;
-
-    let direction = match next_word {
-        "n" | "north" => Direction::North,
-        "e" | "east" => Direction::East,
-        "s" | "south" => Direction::South,
-        "w" | "west" => Direction::West,
-        "u" | "up" => Direction::Up,
-        "d" | "down" => Direction::Down,
-        _ => {
-            return Err(Error(nom::error::Error {
-                input,
-                code: ErrorKind::Alpha,
-            }))
-        }
-    };
-
-    Ok(("", direction))
-}
-
-fn parse_next_word(input: &str) -> IResult<&str, &str> {
-    terminated(alpha1, space0).parse(input)
 }

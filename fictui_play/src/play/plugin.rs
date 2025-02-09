@@ -3,7 +3,7 @@ use std::time::Duration;
 use bevy::{app::ScheduleRunnerPlugin, prelude::*};
 use bevy_ratatui::RatatuiPlugins;
 
-use super::{grid, interface, prompt};
+use super::{handler, interface, prompt};
 
 pub fn app_plugin(app: &mut App) {
     app.add_plugins((
@@ -15,6 +15,6 @@ pub fn app_plugin(app: &mut App) {
     .add_plugins((
         interface::interface_plugin,
         prompt::prompt_plugin,
-        grid::grid_plugin,
+        handler::handler_plugin,
     ));
 }

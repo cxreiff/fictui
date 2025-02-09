@@ -4,7 +4,7 @@ use fictui_core::parser::Command;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
 use tui_input::backend::crossterm::EventHandler;
 
-use super::{grid::GridResource, interface::InterfaceState};
+use super::{handler::HandlerResource, interface::InterfaceState};
 
 #[derive(Event, Deref, DerefMut)]
 pub struct PromptSubmitted(pub String);
@@ -64,7 +64,7 @@ fn handle_prompt_submissions_system(
     mut prompt_submitted: EventReader<PromptSubmitted>,
     mut app_exit: EventWriter<AppExit>,
     mut interface_state: ResMut<InterfaceState>,
-    mut grid: NonSendMut<GridResource>,
+    mut grid: NonSendMut<HandlerResource>,
 ) {
     for PromptSubmitted(submission) in prompt_submitted.read() {
         interface_state.commands.push(submission.into());

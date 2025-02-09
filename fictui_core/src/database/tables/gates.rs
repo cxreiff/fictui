@@ -1,7 +1,7 @@
 use rusqlite::{Params, Row};
 use rusqlite_migration::M;
 
-use super::{direction::Direction, TableRow};
+use crate::database::{types::direction::Direction, TableRow};
 
 pub struct Gate {
     pub id: i32,

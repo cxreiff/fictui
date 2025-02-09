@@ -4,18 +4,16 @@ use std::{
     sync::LazyLock,
 };
 
-use gates::Gate;
 use rusqlite::{Connection, Params, Row};
 use rusqlite_migration::{Migrations, M};
-use tile_instances::TileInstance;
-use tiles::Tile;
+use tables::gates::Gate;
+use tables::tile_instances::TileInstance;
+use tables::tiles::Tile;
 
 use crate::types::BoxedError;
 
-pub mod direction;
-pub mod gates;
-pub mod tile_instances;
-pub mod tiles;
+pub mod tables;
+pub mod types;
 
 static MIGRATIONS: LazyLock<Migrations<'static>> = LazyLock::new(|| {
     let migrations = vec![
