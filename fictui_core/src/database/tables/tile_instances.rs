@@ -3,6 +3,7 @@ use rusqlite_migration::M;
 
 use crate::database::TableRow;
 
+#[derive(Debug)]
 pub struct TileInstance {
     pub id: i32,
     pub tile_id: i32,

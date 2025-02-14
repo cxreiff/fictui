@@ -3,6 +3,7 @@ use rusqlite_migration::M;
 
 use crate::database::{types::direction::Direction, TableRow};
 
+#[derive(Debug)]
 pub struct Gate {
     pub id: i32,
     pub name: String,

@@ -19,6 +19,8 @@ pub enum Command {
 
     Initialize,
     Extend(CommandExtendProps),
+
+    Ping,
 }
 
 impl Command {
@@ -39,6 +41,7 @@ fn parse_command(input: &str) -> IResult<&str, Command> {
         "r" | "rename" => parse_command_rename(input)?,
         "i" | "init" => parse_command_initialize(input)?,
         "e" | "extend" => parse_command_extend(input)?,
+        "p" | "ping" => (input, Command::Ping),
         _ => (input, Command::Unknown),
     };
 

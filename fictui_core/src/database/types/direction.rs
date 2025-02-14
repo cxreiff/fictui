@@ -3,7 +3,7 @@ use rusqlite::{
     ToSql,
 };
 
-#[derive(strum::Display, strum::EnumString, Debug)]
+#[derive(strum::Display, strum::EnumString, Debug, PartialEq)]
 #[strum(serialize_all = "snake_case")]
 pub enum Direction {
     North,

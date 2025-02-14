@@ -1,6 +1,11 @@
 use std::path::PathBuf;
 
-use crate::{database::Database, parser::Command, save_data::SaveData, types::BoxedError};
+use crate::{
+    database::{queries::tiles::TileExtended, Database},
+    parser::Command,
+    save_data::SaveData,
+    types::BoxedError,
+};
 
 pub mod edit;
 pub mod play;
@@ -12,6 +17,7 @@ pub struct Handler {
 pub struct HandlerResponse {
     pub message: String,
     pub save_data: SaveData,
+    pub aux_data: Option<TileExtended>,
 }
 
 impl Handler {
@@ -29,6 +35,7 @@ impl Handler {
             Command::Rename(props) => self.handle_rename(save_data, props),
             Command::Initialize => self.handle_initialize(save_data),
             Command::Extend(props) => self.handle_extend(save_data, props),
+            Command::Ping => self.handle_ping(save_data),
         }
         .unwrap()
     }

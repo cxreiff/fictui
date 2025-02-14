@@ -12,6 +12,7 @@ use tables::tiles::Tile;
 
 use crate::types::BoxedError;
 
+pub mod queries;
 pub mod tables;
 pub mod types;
 
