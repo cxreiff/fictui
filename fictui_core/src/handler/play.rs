@@ -1,43 +1,30 @@
 use crate::{
+    aux_data::TileWithNeighbors,
+    database::{conversions::Retrievable, tables::tiles::Tile},
     parser::play::{CommandGoProps, CommandLookProps, CommandRenameProps},
     save_data::SaveData,
 };
 
-use super::{Handler, HandlerResponse};
+use super::{Handler, InnerHandlerResponse};
 
 impl Handler {
-    pub(super) fn handle_ping(
-        &self,
-        save_data: SaveData,
-    ) -> Result<HandlerResponse, rusqlite::Error> {
-        let tile_extended = self.database.extended_tile_query(save_data.current_tile)?;
-
-        Ok(HandlerResponse {
-            message: "Pinged.".into(),
-            save_data,
-            aux_data: Some(tile_extended),
-        })
-    }
-
     pub(super) fn handle_unknown(
         &self,
         save_data: SaveData,
-    ) -> Result<HandlerResponse, rusqlite::Error> {
-        Ok(HandlerResponse {
+    ) -> Result<InnerHandlerResponse, rusqlite::Error> {
+        Ok(InnerHandlerResponse {
             message: format!("I did not understand that, {}...", save_data.name),
             save_data,
-            aux_data: None,
         })
     }
 
     pub(super) fn handle_quit(
         &self,
         save_data: SaveData,
-    ) -> Result<HandlerResponse, rusqlite::Error> {
-        Ok(HandlerResponse {
+    ) -> Result<InnerHandlerResponse, rusqlite::Error> {
+        Ok(InnerHandlerResponse {
             message: "Quitting...".into(),
             save_data,
-            aux_data: None,
         })
     }
 
@@ -45,71 +32,63 @@ impl Handler {
         &mut self,
         save_data: SaveData,
         props: CommandLookProps,
-    ) -> Result<HandlerResponse, rusqlite::Error> {
-        let tile_extended = self.database.extended_tile_query(save_data.current_tile)?;
-
+    ) -> Result<InnerHandlerResponse, rusqlite::Error> {
         let message = if let Some(ref direction) = props.direction {
-            tile_extended.neighbor_in_direction(direction).map_or(
+            let tile_with_neighbors =
+                TileWithNeighbors::retrieve(&self.database, save_data.current_tile)?;
+
+            tile_with_neighbors.neighbor(direction).map_or(
                 "There is no passage in that direction.".into(),
                 |neighbor| neighbor.gate.summary.clone(),
             )
         } else {
-            tile_extended.tile.body.clone()
+            let tile = Tile::retrieve(&self.database, save_data.current_tile)?;
+            tile.body.clone()
         };
 
-        Ok(HandlerResponse {
-            message,
-            save_data,
-            aux_data: Some(tile_extended),
-        })
+        Ok(InnerHandlerResponse { message, save_data })
     }
 
     pub(super) fn handle_go(
         &mut self,
         save_data: SaveData,
         props: CommandGoProps,
-    ) -> Result<HandlerResponse, rusqlite::Error> {
-        let tile_extended = self.database.extended_tile_query(save_data.current_tile)?;
-        let neighbor = tile_extended.neighbor_in_direction(&props.direction);
+    ) -> Result<InnerHandlerResponse, rusqlite::Error> {
+        let tile_with_neighbors =
+            TileWithNeighbors::retrieve_recursive(&self.database, save_data.current_tile, 2)?;
 
-        let Some(neighbor) = neighbor else {
-            return Ok(HandlerResponse {
+        let Some(neighbor) = tile_with_neighbors.neighbor(&props.direction) else {
+            return Ok(InnerHandlerResponse {
                 message: "There is no passage in that direction".into(),
                 save_data,
-                aux_data: Some(tile_extended),
             });
         };
 
         let gate_body = &neighbor.gate.body;
 
-        let new_tile_extended = self
-            .database
-            .extended_tile_query(neighbor.tile_instance.id)?;
+        let tile_body = neighbor.tile.as_ref().unwrap().tile.body.clone();
 
-        let tile_body = &new_tile_extended.tile.body;
+        let message = format!("{gate_body}\n\n{tile_body}");
 
-        Ok(HandlerResponse {
-            message: format!("{gate_body}\n\n{tile_body}"),
-            save_data: SaveData {
-                current_tile: new_tile_extended.tile_instance.id,
-                ..save_data
-            },
-            aux_data: Some(new_tile_extended),
-        })
+        let save_data = SaveData {
+            current_tile: neighbor.gate.destination_id,
+            ..save_data
+        };
+
+        Ok(InnerHandlerResponse { message, save_data })
     }
 
     pub(super) fn handle_rename(
         &mut self,
         save_data: SaveData,
         props: CommandRenameProps,
-    ) -> Result<HandlerResponse, rusqlite::Error> {
-        Ok(HandlerResponse {
+    ) -> Result<InnerHandlerResponse, rusqlite::Error> {
+        Ok(InnerHandlerResponse {
             message: format!("You are now called {}", props.new_name),
             save_data: SaveData {
                 name: props.new_name,
                 ..save_data
             },
-            aux_data: None,
         })
     }
 }

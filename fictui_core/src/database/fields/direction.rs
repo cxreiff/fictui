@@ -1,9 +1,11 @@
+use std::ops::Not;
+
 use rusqlite::{
     types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef},
     ToSql,
 };
 
-#[derive(strum::Display, strum::EnumString, Debug, PartialEq)]
+#[derive(strum::Display, strum::EnumString, Clone, Debug, PartialEq)]
 #[strum(serialize_all = "snake_case")]
 pub enum Direction {
     North,
@@ -26,5 +28,20 @@ impl FromSql for Direction {
             .as_str()?
             .parse()
             .map_err(|e| FromSqlError::Other(Box::new(e)))
+    }
+}
+
+impl Not for Direction {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        match self {
+            Direction::North => Direction::South,
+            Direction::East => Direction::West,
+            Direction::South => Direction::North,
+            Direction::West => Direction::East,
+            Direction::Up => Direction::Down,
+            Direction::Down => Direction::Up,
+        }
     }
 }

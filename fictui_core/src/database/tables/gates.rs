@@ -1,11 +1,10 @@
 use rusqlite::{Params, Row};
 use rusqlite_migration::M;
 
-use crate::database::{types::direction::Direction, TableRow};
+use crate::database::{conversions::TableRow, fields::direction::Direction};
 
 #[derive(Debug)]
 pub struct Gate {
-    pub id: i32,
     pub name: String,
     pub summary: String,
     pub body: String,
@@ -15,9 +14,12 @@ pub struct Gate {
 }
 
 impl TableRow for Gate {
+    fn name() -> String {
+        "gates".into()
+    }
+
     fn columns() -> &'static [&'static str] {
         &[
-            "id",
             "name",
             "summary",
             "body",
@@ -47,7 +49,6 @@ CREATE TABLE gates (
 
     fn to_params(&self) -> impl Params {
         (
-            &self.id,
             &self.name,
             &self.summary,
             &self.body,
@@ -59,13 +60,12 @@ CREATE TABLE gates (
 
     fn try_from_row(row: &Row) -> rusqlite::Result<Self> {
         Ok(Self {
-            id: row.get(0)?,
-            name: row.get(1)?,
-            summary: row.get(2)?,
-            body: row.get(3)?,
-            source_id: row.get(4)?,
-            destination_id: row.get(5)?,
-            direction: row.get(6)?,
+            name: row.get(0)?,
+            summary: row.get(1)?,
+            body: row.get(2)?,
+            source_id: row.get(3)?,
+            destination_id: row.get(4)?,
+            direction: row.get(5)?,
         })
     }
 }

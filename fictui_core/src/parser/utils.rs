@@ -5,7 +5,7 @@ use nom::{
     IResult, Parser,
 };
 
-use crate::database::types::direction::Direction;
+use crate::database::fields::direction::Direction;
 
 pub(super) fn parse_direction(input: &str) -> IResult<&str, Direction> {
     let (input, next_word) = parse_next_word(input)?;

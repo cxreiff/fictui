@@ -1,52 +1,40 @@
 use rusqlite::OptionalExtension;
 
-use crate::{parser::edit::CommandExtendProps, save_data::SaveData};
+use crate::{
+    database::{
+        conversions::{Countable, Storable},
+        tables::{gates::Gate, tiles::Tile},
+    },
+    parser::edit::CommandExtendProps,
+    save_data::SaveData,
+};
 
-use super::{Handler, HandlerResponse};
+use super::{Handler, InnerHandlerResponse};
 
 impl Handler {
     pub(crate) fn handle_initialize(
         &mut self,
         save_data: SaveData,
-    ) -> Result<HandlerResponse, rusqlite::Error> {
-        let count: i32 = self
-            .database
-            .query_row("SELECT COUNT(*) FROM tiles", [], |row| row.get(0))?;
+    ) -> rusqlite::Result<InnerHandlerResponse> {
+        let count = Tile::count(&self.database)?;
 
         if count > 0 {
-            return Ok(HandlerResponse {
+            return Ok(InnerHandlerResponse {
                 message: "Cannot initialize a non-empty table.".into(),
                 save_data,
-                aux_data: None,
             });
         }
 
-        let tx = self.database.transaction()?;
+        Tile {
+            name: "starting tile".into(),
+            summary: "starting summary".into(),
+            body: "this is the first tile".into(),
+        }
+        .store(&self.database)?;
 
-        tx.execute(
-            "INSERT INTO tiles (name, summary, body) VALUES (?1, ?2, ?3)",
-            (
-                "starting tile",
-                "starting summary",
-                "this is the first tile",
-            ),
-        )?;
-
-        tx.execute(
-            "INSERT INTO tiles (name, summary, body) VALUES (?1, ?2, ?3)",
-            (
-                "starting tile",
-                "starting summary",
-                "this is the first tile",
-            ),
-        )?;
-
-        tx.commit()?;
-
-        Ok(HandlerResponse {
+        Ok(InnerHandlerResponse {
             message: "Initialized grid with a starting tile.".into(),
             save_data: SaveData::default(),
-            aux_data: None,
         })
     }
 
@@ -54,64 +42,65 @@ impl Handler {
         &mut self,
         save_data: SaveData,
         props: CommandExtendProps,
-    ) -> Result<HandlerResponse, rusqlite::Error> {
+    ) -> Result<InnerHandlerResponse, rusqlite::Error> {
+        let SaveData { current_tile, .. } = save_data;
+        let CommandExtendProps { name, direction } = props;
+
         let gate = self
             .database
             .query_row(
                 "SELECT id FROM gates WHERE source_id = ?1 AND direction = ?2",
-                (&save_data.current_tile, &props.direction),
+                (&current_tile, &direction),
                 |_| Ok(()),
             )
             .optional()?;
 
         if gate.is_some() {
-            return Ok(HandlerResponse {
+            return Ok(InnerHandlerResponse {
                 message: "There is already a tile in that direction.".into(),
                 save_data,
-                aux_data: None,
             });
         }
 
-        let tile_id: Option<i32> = self
-            .database
-            .query_row(
-                "SELECT id FROM tiles WHERE name = ?1",
-                (&props.name,),
-                |row| row.get(0),
-            )
-            .optional()?;
-
-        // TODO: probably a bug below here.
+        // TODO: Validate new tile coordinate-wise (check for spatial overlap).
 
         let tx = self.database.transaction()?;
 
-        if tile_id.is_none() {
-            tx.execute(
-                "INSERT INTO tiles (name, summary, body) VALUES (?1, ?2, ?3)",
-                (&props.name, "new summary", "new body"),
-            )?;
+        let new_tile_id = Tile {
+            name: name.clone(),
+            summary: format!("{name} summary"),
+            body: format!("{name} body"),
         }
+        .store(&tx)
+        .unwrap();
 
-        let tile_id = tile_id.unwrap_or(tx.last_insert_rowid().try_into().unwrap());
+        Gate {
+            name: format!("{direction} gate"),
+            summary: format!("{direction} gate summary"),
+            body: format!("{direction} gate body"),
+            direction: direction.clone(),
+            source_id: current_tile,
+            destination_id: new_tile_id,
+        }
+        .store(&tx)?;
 
-        tx.execute(
-            "INSERT INTO tile_instances (tile_id) VALUES (?1)",
-            (tile_id,),
-        )?;
+        let opposite_direction = !direction.clone();
 
-        // tx.execute(
-        //     "INSERT INTO gates (name, summary, body, source_id, destination_id, direction) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        //     (),
-        // )?;
+        Gate {
+            name: format!("{opposite_direction} gate"),
+            summary: format!("{opposite_direction} gate summary"),
+            body: format!("{opposite_direction} gate body"),
+            direction: opposite_direction.clone(),
+            source_id: new_tile_id,
+            destination_id: current_tile,
+        }
+        .store(&tx)?;
 
         tx.commit()?;
 
-        // TODO: create all possible gates.
-
-        Ok(HandlerResponse {
-            message: format!("Extended in the direction {}", props.direction),
+        Ok(InnerHandlerResponse {
+            message: format!("Extended in the direction {direction}"),
             save_data,
-            aux_data: None,
         })
     }
 }

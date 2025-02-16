@@ -1,6 +1,6 @@
 use nom::IResult;
 
-use crate::database::types::direction::Direction;
+use crate::database::fields::direction::Direction;
 
 use super::{
     utils::{parse_direction, parse_next_word},

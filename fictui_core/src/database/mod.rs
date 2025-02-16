@@ -4,24 +4,20 @@ use std::{
     sync::LazyLock,
 };
 
-use rusqlite::{Connection, Params, Row};
-use rusqlite_migration::{Migrations, M};
+use conversions::TableRow;
+use rusqlite::Connection;
+use rusqlite_migration::Migrations;
 use tables::gates::Gate;
-use tables::tile_instances::TileInstance;
 use tables::tiles::Tile;
 
 use crate::types::BoxedError;
 
-pub mod queries;
+pub mod conversions;
+pub mod fields;
 pub mod tables;
-pub mod types;
 
 static MIGRATIONS: LazyLock<Migrations<'static>> = LazyLock::new(|| {
-    let migrations = vec![
-        Gate::migrations(),
-        Tile::migrations(),
-        TileInstance::migrations(),
-    ];
+    let migrations = vec![Gate::migrations(), Tile::migrations()];
     Migrations::new(migrations.into_iter().flatten().collect())
 });
 
@@ -48,17 +44,6 @@ impl Deref for Database {
 impl DerefMut for Database {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.connection
-    }
-}
-
-pub trait TableRow: Sized {
-    fn migrations() -> Vec<M<'static>>;
-    fn columns() -> &'static [&'static str];
-    fn to_params(&self) -> impl Params;
-    fn try_from_row(row: &Row) -> rusqlite::Result<Self>;
-
-    fn columns_string() -> String {
-        Self::columns().join(", ")
     }
 }
 

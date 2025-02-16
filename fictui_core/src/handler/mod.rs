@@ -1,10 +1,7 @@
 use std::path::PathBuf;
 
 use crate::{
-    database::{queries::tiles::TileExtended, Database},
-    parser::Command,
-    save_data::SaveData,
-    types::BoxedError,
+    aux_data::AuxData, database::Database, parser::Command, save_data::SaveData, types::BoxedError,
 };
 
 pub mod edit;
@@ -17,7 +14,12 @@ pub struct Handler {
 pub struct HandlerResponse {
     pub message: String,
     pub save_data: SaveData,
-    pub aux_data: Option<TileExtended>,
+    pub aux_data: AuxData,
+}
+
+pub struct InnerHandlerResponse {
+    pub message: String,
+    pub save_data: SaveData,
 }
 
 impl Handler {
@@ -27,7 +29,7 @@ impl Handler {
     }
 
     pub fn handle(&mut self, command: Command, save_data: SaveData) -> HandlerResponse {
-        match command {
+        let InnerHandlerResponse { message, save_data } = (match command {
             Command::Unknown => self.handle_unknown(save_data),
             Command::Quit => self.handle_quit(save_data),
             Command::Look(props) => self.handle_look(save_data, props),
@@ -35,8 +37,15 @@ impl Handler {
             Command::Rename(props) => self.handle_rename(save_data, props),
             Command::Initialize => self.handle_initialize(save_data),
             Command::Extend(props) => self.handle_extend(save_data, props),
-            Command::Ping => self.handle_ping(save_data),
+        })
+        .unwrap();
+
+        let aux_data = AuxData::construct(&self.database, &save_data).unwrap();
+
+        HandlerResponse {
+            message,
+            save_data,
+            aux_data,
         }
-        .unwrap()
     }
 }
