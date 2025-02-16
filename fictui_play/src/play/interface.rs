@@ -3,9 +3,9 @@ use std::io;
 use bevy::prelude::*;
 use bevy::utils::error;
 use bevy_ratatui::terminal::RatatuiContext;
-use fictui_core::database::queries::tiles::TileExtended;
+use fictui_core::aux_data::AuxData;
 use fictui_core::save_data::SaveData;
-use ratatui::layout::{Constraint, Layout, Size};
+use ratatui::layout::{Constraint, Flex, Layout, Size};
 use ratatui::layout::{Position, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::text::{Line, Span};
@@ -46,7 +46,7 @@ pub struct InterfaceState {
     pub commands: Vec<String>,
     pub messages: Vec<String>,
     pub save_data: SaveData,
-    pub aux_data: Option<TileExtended>,
+    pub aux_data: Option<AuxData>,
 }
 
 #[derive(Default)]
@@ -57,11 +57,42 @@ pub enum InterfaceFocus {
 
 impl InterfaceState {
     fn draw(&mut self, frame: &mut Frame, area: Rect) {
-        let constraints = [Constraint::Min(3), Constraint::Length(3)];
+        let constraints = [
+            Constraint::Length(18),
+            Constraint::Min(3),
+            Constraint::Length(3),
+        ];
+
         let layout = Layout::vertical(constraints).split(area);
 
-        self.draw_readout(frame, layout[0]);
-        self.draw_prompt(frame, layout[1]);
+        self.draw_map(frame, layout[0]);
+        self.draw_readout(frame, layout[1]);
+        self.draw_prompt(frame, layout[2]);
+    }
+
+    fn draw_map(&mut self, frame: &mut Frame, area: Rect) {
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .padding(Padding::horizontal(1));
+        let inner_area = block.inner(area);
+
+        let inner_block = Block::default()
+            .borders(Borders::all())
+            .padding(Padding::horizontal(1))
+            .fg(Color::Magenta);
+        let center_area = center(inner_area, Constraint::Length(16), Constraint::Length(8));
+        let neighbors = self
+            .aux_data
+            .as_ref()
+            .map(|aux| aux.tile.neighbors.len())
+            .unwrap_or(0);
+        let text = Line::from(neighbors.to_string()).fg(Color::Cyan);
+
+        let inner_center_area = inner_block.inner(center_area);
+
+        frame.render_widget(block, area);
+        frame.render_widget(inner_block, center_area);
+        frame.render_widget(text, inner_center_area);
     }
 
     fn draw_readout(&mut self, frame: &mut Frame, area: Rect) {
@@ -173,4 +204,12 @@ impl InterfaceState {
         let cursor_offset = (self.prompt_input.visual_cursor().max(scroll) - scroll) as u16;
         frame.set_cursor_position(Position::new(area.x + cursor_offset, area.y));
     }
+}
+
+fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
+    let [area] = Layout::horizontal([horizontal])
+        .flex(Flex::Center)
+        .areas(area);
+    let [area] = Layout::vertical([vertical]).flex(Flex::Center).areas(area);
+    area
 }
