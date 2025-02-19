@@ -81,7 +81,6 @@ fn handle_prompt_submissions_system(
         interface_state.messages.push(response.message);
         interface_state.save_data = response.save_data;
 
-        // TODO: REPLACE WITH ACTUAL UI
         interface_state.aux_data = Some(response.aux_data);
 
         interface_state.readout_scroll.scroll_to_bottom();

@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "fictui",
     "fictui_core",
     "fictui_play",
 ]
